@@ -46,7 +46,7 @@ val1 = eval_quad(of1 - of2, X, x_vals)
 val2 = eval_quad(of1 - of3, X, x_vals)
 val3 = eval_quad(of2 - of3, X, x_vals)
 
-@test val1 ≈ val2
+@test isapprox(val1, 0.0; atol=1e-9)
 @test isapprox(val2, 0.0; atol=1e-9)
 @test isapprox(val3, 0.0; atol=1e-9)
 
