@@ -4,23 +4,38 @@
 [![GitHub license](https://img.shields.io/github/license/hetalang/DigiPopdata.jl.svg)](https://github.com/hetalang/DigiPopdata.jl/blob/master/LICENSE)
 
 # DigiPopData.jl
-Data prep and visualization tools for Virtual Patient QSP modeling
+
+Tools for comparing real and virtual populations in QSP using unified metrics and loss functions
 
 ## Overview
 
-DigiPopData.jl is a Julia package designed to facilitate the preparation and visualization of data for Virtual Patient QSP (Quantitative Systems Pharmacology) modeling. It provides a set of tools and functions to streamline the process of data handling, making it easier for researchers and practitioners in the field of pharmacometrics and systems biology.
+DigiPopData.jl is a Julia package for comparing individual-level simulation outputs with aggregated experimental data in Virtual Patient QSP workflows.
 
-The package provides the unified table format for the real population data, divided to different metrics types. The data can be loaded from DataFrame or CSV file.
+In practice, experimental data reported in publications are usually available only as summary statistics
+(e.g. mean, median, quantiles, survival curves), while QSP models produce individual-level simulations.
+DigiPopData.jl provides a unified way to bridge this gap.
 
-It also expect the specific format for the virtual population data, which is a DataFrame.
+The package defines metric-based representations of experimental data and computes loss functions
+that quantify the mismatch between simulated individuals and reported population-level statistics.
+
+Experimental (real population) data are provided in a unified tabular format with explicitly defined metric types.
+Data can be loaded from a DataFrame or CSV file.
+
+Virtual population data are provided as a DataFrame containing individual-level simulation results.
 
 See the [documentation](https://hetalang.github.io/DigiPopData.jl/dev/) for more details.
 
+## Typical use case
+
+- define experimental target statistics using a unified metric-based data format,
+- compute metric-based mismatch between simulations and reported data,
+- use the loss for calibration or virtual population selection.
+
 ## Implemented metrics
 
-Each metric compare real and virtual populations base on the following statistics:
+Each metric compares simulated individuals with experimental data based on the following statistics:
 
-| Julia struct | metric.type in DataFrame | Bin optimization | Description |
+| Julia struct | metric.type in DataFrame | BIP support | Description |
 |--------------|--------------------------|------------------|-------------|
 | `MeanMetric` | mean | + | Compare the mean. |
 | `MeanSDMetric` | mean_sd | + |Compare the mean and standard deviation. |
@@ -28,9 +43,11 @@ Each metric compare real and virtual populations base on the following statistic
 | `QuantileMetric` | quantile | + | Compare the quantile values. |
 | `SurvivalMetric` | survival | + | Compare the survival curves. |
 
+**BIP support** indicates whether the metric is supported for *Binary Integer Programming* optimization, for example in [VPopMIP.jl](https://github.com/hetalang/VPopMIP.jl) package.
+
 ## Code examples
 
-Calculation of the loss function for the `MeanMetric` metric type:
+Calculation of the loss function for the `SurvivalMetric`:
 
 ```julia
 using DigiPopData
@@ -49,7 +66,7 @@ loss_value = mismatch(
 )
 ```
 
-Get loss value for metrics and simulations from the CSV files
+Compute the total loss between real and virtual populations defined in CSV files:
 
 ```julia
 using DigiPopData
