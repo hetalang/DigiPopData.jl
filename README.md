@@ -1,7 +1,7 @@
-[![CI](https://github.com/insysbio/DigiPopData.jl/actions/workflows/autotest.yml/badge.svg)](https://github.com/insysbio/DigiPopData.jl/actions/workflows/autotest.yml)
-[![codecov](https://codecov.io/gh/insysbio/DigiPopData.jl/graph/badge.svg?token=939QCNXCYP)](https://codecov.io/gh/insysbio/DigiPopData.jl)
-[![docs-stable](https://img.shields.io/badge/docs-dev-blue?logo=githubpages)](https://insysbio.github.io/DigiPopData.jl/dev/)
-[![GitHub license](https://img.shields.io/github/license/insysbio/DigiPopdata.jl.svg)](https://github.com/insysbio/DigiPopdata.jl/blob/master/LICENSE)
+[![CI](https://github.com/hetalang/DigiPopData.jl/actions/workflows/autotest.yml/badge.svg)](https://github.com/hetalang/DigiPopData.jl/actions/workflows/autotest.yml)
+[![codecov](https://codecov.io/gh/hetalang/DigiPopData.jl/graph/badge.svg?token=939QCNXCYP)](https://codecov.io/gh/hetalang/DigiPopData.jl)
+[![docs-stable](https://img.shields.io/badge/docs-dev-blue?logo=githubpages)](https://hetalang.github.io/DigiPopData.jl/dev/)
+[![GitHub license](https://img.shields.io/github/license/hetalang/DigiPopdata.jl.svg)](https://github.com/hetalang/DigiPopdata.jl/blob/master/LICENSE)
 
 # DigiPopData.jl
 Data prep and visualization tools for Virtual Patient QSP modeling
@@ -14,7 +14,7 @@ The package provides the unified table format for the real population data, divi
 
 It also expect the specific format for the virtual population data, which is a DataFrame.
 
-See the [documentation](https://insysbio.github.io/DigiPopData.jl/dev/) for more details.
+See the [documentation](https://hetalang.github.io/DigiPopData.jl/dev/) for more details.
 
 ## Implemented metrics
 
@@ -69,4 +69,4 @@ loss = get_loss(virtual_df, metrics)
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
-Copyright (c) 2025 InSysBio CY
+Copyright (c) 2025-2026 Heta project

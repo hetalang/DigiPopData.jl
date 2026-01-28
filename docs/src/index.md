@@ -21,4 +21,4 @@ Each metric compare real and virtual populations base on the following statistic
 | [`QuantileMetric`](@ref) | quantile | + | Compare the quantile values. |
 | [`SurvivalMetric`](@ref) | survival | + | Compare the survival curves. |
 
-Copyright (c) 2025 InSysBio CY
+Copyright (c) 2025-2026 Heta project
