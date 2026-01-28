@@ -21,3 +21,7 @@ end
     @testset "MetricBinding unit tests" begin include("metric-binding.jl") end
     @testset "loaders unit tests" begin include("loaders.jl") end
 end
+
+@testset "DigiPopData invariance tests" begin
+    include("category-metric-invariance.jl")
+end
