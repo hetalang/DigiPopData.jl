@@ -1,24 +1,30 @@
-# Key Concepts
+# README
 
-[DigiPopData.jl](https://github.com/hetalang/DigiPopData.jl) is an Julia package for comparing individual-level simulation outputs with aggregated experimental data in Virtual Patient QSP workflows.
+This documentation describes **DigiPopData.jl**, a Julia package for comparing individual-level QSP simulations with aggregated experimental data using metric-based representations and loss functions.
 
-In practice, experimental data reported in publications are usually available only as summary statistics
-(e.g. mean, median, quantiles, survival curves), while QSP models produce individual-level simulations.
-DigiPopData.jl provides a unified way to bridge this gap.
+## Content
 
-The package defines metric-based representations of experimental data and computes loss functions
-that quantify the mismatch between simulated individuals and reported population-level statistics.
+- **Home**
+    - **README**
+    - [Key Concepts](key-concepts.md)
+    - [Getting Started](getting-started.md)
+    - [Data Format](data-format.md)
 
-Experimental (real population) data are provided in a unified tabular format with explicitly defined metric types.
-Data can be loaded from a DataFrame or CSV file.
+- **Metrics**
+    - [Overview](metrics.md)
+    - [Mean](mean.md)
+    - [MeanSD](mean-sd.md)
+    - [Category](category.md)
+    - [Quantile](quantile.md)
+    - [Survival](survival.md)
 
-Virtual population data are provided as a DataFrame containing individual-level simulation results.
+- **Reference**
+- [API](api.md)
 
-## Typical use case
+## External resources
 
-- define experimental target statistics using a unified metric-based data format,
-- compute metric-based mismatch between simulations and reported data,
-- use the loss for calibration or virtual population selection.
+- Source code: <https://github.com/hetalang/DigiPopData.jl>  
+- Issue tracker: <https://github.com/hetalang/DigiPopData.jl/issues>
 
 ## License
 

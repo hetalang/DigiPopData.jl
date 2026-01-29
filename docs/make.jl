@@ -7,7 +7,8 @@ makedocs(
     format = Documenter.HTML(),
     pages = [
         "Home" => [
-            "Key Concepts" => "index.md",
+            "README" => "index.md",
+            "Key Concepts" => "key-concepts.md",
             "Getting Started" => "getting-started.md",
             "Data Format" => "data-format.md",
             #"Loss Function" => "loss-function.md",
