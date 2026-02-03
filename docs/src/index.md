@@ -8,7 +8,8 @@ This documentation describes **DigiPopData.jl**, a Julia package for comparing i
     - **README**
     - [Key Concepts](key-concepts.md)
     - [Getting Started](getting-started.md)
-    - [Data Format](data-format.md)
+    - [Simulation Data Format](simulation-data-format.md)
+    - [Metric Data Format](metric-data-format.md)
 
 - **Metrics**
     - [Overview](metrics.md)

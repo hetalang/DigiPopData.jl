@@ -54,10 +54,10 @@ The resulting collection, `Vector{MetricBinding}`, represents the complete set o
 It serves as the primary input for loss computation between simulated individuals and experimental data.
 
 In parallel, the user generates individual-level simulations of a QSP model for a virtual patient population.
-Simulation results are stored in a tabular format (e.g. `DataFrame `or `CSV`), where each row corresponds to one virtual individual and columns contain model outputs such as concentrations, biomarkers, or event times.
-
+Simulation results are stored in a tabular format in `CSV` file which then can be loaded into a table-like structure `DataFrame`, where each row corresponds to one virtual individual and columns contain model outputs such as concentrations, biomarkers, or event times.
 Depending on the task (e.g. parameter calibration, virtual population selection, or model comparison), these simulation results can be combined with the metric bindings to evaluate model performance.
-A standard entry point is the get_loss function, which takes a `Vector{MetricBinding}` and a table of individual simulations
+
+A standard entry point is the `get_loss` function, which takes a `Vector{MetricBinding}` and a table of individual simulations
 and returns a scalar loss value representing the overall mismatch.
 
 For finer-grained control, metric-level methods such as `mismatch` and `mismatch_expression` allow evaluation of individual metrics independently.
@@ -83,4 +83,4 @@ Users may also implement custom analysis or optimization procedures that operate
 
 - The package **does not provide optimization algorithms** or virtual population selection methods. Instead, it is designed to be used as a building block within external calibration, optimization, or selection workflows.
 
-- The package **does not attempt to reconstruct or infer individual-level experimental data**  from aggregated summary statistics. It operates strictly on reported population-level endpoints and their comparison to simulations.
+- The package **does not attempt to reconstruct individual-level experimental data from aggregated summary statistics**, as such reconstruction is fundamentally ill-posed and non-identifiable.
