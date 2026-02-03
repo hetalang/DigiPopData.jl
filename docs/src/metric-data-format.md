@@ -50,12 +50,12 @@ The table below defines two metrics for the same scenario `Tx`:
 | id | active | scenario | metric.type | metric.size | endpoint | metric.mean | metric.sd | metric.levels | metric.values |
 |---|---:|---|---|---:|---|---:|---:|---:|---:|
 | m\_conc24\_mean\_Tx | 1 | Tx | mean | 40 | conc_t24 | 2.10 | 0.2 |  |  |
-| m\_biomarker\_median\_Tx | 1 | Tx | quantile | 40 | biomarker |  |  | 0.50 | 1.35 |
+| m\_biomarker\_q\_Tx | 1 | Tx | quantile | 40 | biomarker |  |  | 0.25;0.50;0.75 | 0.1;1.35;10.1 |
 
 Interpretation:
 
 - `m_conc24_mean_Tx` targets the **mean** of `conc_t24` in the experimental population.
-- `m_biomarker_median_Tx` targets the **median** (quantile 0.50) of `biomarker`.
+- `m_biomarker_q_Tx` targets the **quantiles** (0.25, 0.50, 0.75) of `biomarker`.
 
 In practice, you may store only the columns required by the metric types used in your dataset.
 
