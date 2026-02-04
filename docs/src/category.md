@@ -22,7 +22,7 @@ The experimental cohort consists of 100 patients with the following distribution
 - Non-Responder: 50  
 - Partial Responder: 10  
 
-This information can be encoded as a `CategoryMetric` as follows:
+This information can be encoded as a [CategoryMetric](category.md) as follows:
 ```julia
 using DigiPopData
 
@@ -33,6 +33,8 @@ cat_metric1 = CategoryMetric(
 )
 ```
 Here, the experimental data are represented as population-level proportions, without access to individual patient outcomes.
+
+##Comparison with simulated data
 
 Simulation results are stored as a vector of categorical outcomes, where each element corresponds to one virtual patient.
 ```julia
@@ -138,3 +140,25 @@ Substituting $\vec{k} = Z^T X$ shows that $\Lambda(X)$ is a quadratic form
 with respect to the binary decision variables $X$.
 As a result, cohort selection based on `CategoryMetric`
 can be formulated as a Mixed-Integer Quadratic Programming (MIQP) problem.
+
+## Practical notes
+
+- `CategoryMetric` operates on **aggregated categorical frequencies** and does not require
+  access to individual-level experimental data.
+
+- Categories with zero experimental probability are automatically marked as inactive
+  and excluded from the loss computation.
+  This avoids numerical issues while preserving the correct degrees of freedom.
+
+- The loss is computed as a **Gaussian (second-order) approximation of the multinomial
+  negative log-likelihood**.
+  As a result, it can be interpreted as a likelihood-based discrepancy
+  and safely combined with other likelihood-based metrics.
+
+- The metric is insensitive to the ordering of category labels.
+  Only category membership and experimental probabilities are used.
+
+- Reliable results require sufficiently large virtual populations
+  and non-degenerate experimental probabilities.
+  Extremely rare categories may require special consideration
+  or aggregation at the data preparation stage.
