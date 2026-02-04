@@ -105,14 +105,46 @@ function mismatch_expression(
     values_ext = [-Inf; dp.values; Inf] # add 0 and 1 to the levels
     diff = AffExpr[]
     for i in 1:length(dp.rates)
-        mask = values_ext[i] .< sim .<= values_ext[i+1]
-        expr = sum(mask .* X) - dp.rates[i] * X_len
+        mask = Int.(values_ext[i] .< sim .<= values_ext[i+1])
+        expr = sum(mask .* X) - round(Int, dp.rates[i] * X_len)
         push!(diff, expr)
     end
 
     ### TODO: check if the non-active groups are empty
     
     diff_active = diff[dp.group_active][1:len] # all non zero without last one
+    loss = diff_active' * dp.cov_inv * diff_active / X_len # quadratic form
+    
+    return loss
+end
+
+function add_mismatch_expression!(
+    prob::GenericModel,
+    sim::Vector{Float64},
+    dp::SurvivalMetric,
+    X::Vector{VariableRef},
+    X_len::Int
+)
+    validate(sim, dp)
+    # Check that the length of sim and X are equal
+    length(sim) == length(X) || throw(DimensionMismatch("Length of simulation data and X must be equal"))
+    # Check that X_len is less than sim
+    X_len <= length(sim) || throw(DimensionMismatch("X_len must be less than or equal to the length of simulation data"))
+
+    len = sum(dp.group_active) - 1 # degree of freedom
+    rates_len = length(dp.rates)
+
+    # calculate the loss
+    values_ext = [-Inf; dp.values; Inf] # add 0 and 1 to the levels
+    z_srv = @variable(prob, [i=1:rates_len] )
+    for i in 1:rates_len
+        mask = Int.(values_ext[i] .< sim .<= values_ext[i+1])
+        @constraint(prob, z_srv[i] == sum(mask .* X) - round(Int, dp.rates[i] * X_len))
+    end
+
+    ### TODO: check if the non-active groups are empty
+    
+    diff_active = z_srv[dp.group_active][1:len] # all non zero without last one
     loss = diff_active' * dp.cov_inv * diff_active / X_len # quadratic form
     
     return loss
