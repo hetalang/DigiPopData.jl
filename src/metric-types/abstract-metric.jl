@@ -1,4 +1,4 @@
-import JuMP: VariableRef, AffExpr
+import JuMP: VariableRef, AffExpr, GenericModel, @variable, @constraint
 
 const RATE_TOL = 1e-6 # value to comare rates to 1 or 0
 
