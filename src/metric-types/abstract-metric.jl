@@ -41,11 +41,12 @@ function mismatch(sim::AbstractVector{<:Real}, metric::AbstractMetric)
 end
 
 """
-    mismatch_expression(sim::AbstractVector{<:Real}, metric::AbstractMetric, X::Vector{VariableRef}, X_len::Int) -> QuadExpr
+    add_mismatch_expression!(prob::GenericModel, sim::AbstractVector{<:Real}, dp::AbstractMetric, X::Vector{VariableRef}, X_len::Int) -> QuadExpr
 
 ## Arguments
+- `prob::GenericModel`: A JuMP optimization model.
 - `sim::AbstractVector{<:Real}`: A vector of simulated data.
-- `metric::AbstractMetric`: An instance of a metric descriptor (e.g., `MeanMetric`, `CategoryMetric`, etc.).
+- `dp::AbstractMetric`: An instance of a metric descriptor (e.g., `MeanMetric`, `CategoryMetric`, etc.).
 - `X::Vector{VariableRef}`: A vector of JuMP variable references.
 - `X_len::Int`: The length of the vector of JuMP variable references.
 
@@ -53,16 +54,15 @@ Return an expression that quantifies the mismatch between simulated data `sim`
 and the target metric `metric`.
 The concrete formula depends on the subtype of `AbstractMetric`.
 """
-function mismatch_expression(sim::AbstractVector{<:Real}, dp::AbstractMetric, X::Vector{VariableRef}, X_len::Int)
-    throw(MethodError(mismatch_expression, (sim, dp, X, X_len))) # fallback
+function add_mismatch_expression!(prob::GenericModel, sim::AbstractVector{<:Real}, dp::AbstractMetric, X::Vector{VariableRef}, X_len::Int)
+    throw(MethodError(add_mismatch_expression!, (prob, sim, dp, X, X_len))) # fallback
 end
 
 """
-    validate(sim::AbstractVector{<:Real}, metric::AbstractMetric)
-
+    validate(sim::AbstractVector{<:Real, dp::AbstractMetric)
 ## Arguments
 - `sim::AbstractVector{<:Real}`: A vector of simulated data.
-- `metric::AbstractMetric`: An instance of a metric descriptor (e.g., `MeanMetric`, `CategoryMetric`, etc.).
+- `dp::AbstractMetric`: An instance of a metric descriptor (e.g., `MeanMetric`, `CategoryMetric`, etc.).
 
 Validate the simulated data `sim` against the target metric `metric`. It throws an error
 if the validation fails.

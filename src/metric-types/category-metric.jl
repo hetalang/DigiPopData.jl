@@ -87,35 +87,6 @@ function mismatch(
     return loss
 end
 
-function mismatch_expression(
-    sim::AbstractVector{<:AbstractString},
-    dp::CategoryMetric,
-    X::Vector{VariableRef},
-    X_len::Int
-)
-    validate(sim, dp)
-    # Check that the length of sim and X are equal
-    length(sim) == length(X) || throw(DimensionMismatch("Length of simulation data and X must be equal"))
-    # Check that X_len is less than sim
-    X_len <= length(sim) || throw(DimensionMismatch("X_len must be less than or equal to the length of simulation data"))
-    
-    len = sum(dp.group_active) - 1
-
-    # calculate the loss
-    diff = AffExpr[]
-    for i in 1:length(dp.groups)
-        mask = Int.(sim .== dp.groups[i])
-        # adding round as the equations reflect number of persons 
-        expr = sum(mask .* X) - round(Int, dp.rates[i] * X_len)
-        push!(diff, expr)
-    end
-
-    diff_active = diff[dp.group_active][1:len] # all non zero without last one    
-    loss = diff_active' * dp.cov_inv * diff_active / X_len
-
-    loss
-end
-
 function add_mismatch_expression!(
     prob::GenericModel,
     sim::AbstractVector{<:AbstractString},

@@ -42,16 +42,15 @@ m4 = SurvivalMetric(100, [0.75, 0.5, 0.25, 0.0], [24., 48., 72., 120.])
 @test_throws DimensionMismatch SurvivalMetric(100, [0.5, 0.3, 0.1], [1., 10., 100., 1000.]) # wrong length
 @test_throws ArgumentError SurvivalMetric(100, Float64[], Float64[]) # empty
 
-# mismatch_expression tests
+# add_mismatch_expression! tests
 model = JuMP.Model()
 @variable(model, X[1:101], Bin)
 m5 = SurvivalMetric(100, [0.75, 0.5, 0.25], [24., 48., 72.])
 simulated_data = [fill(5., 50); fill(15., 50); 20.]
-expr1 = mismatch_expression(simulated_data, m5, X, 10)
+expr1 = add_mismatch_expression!(model, simulated_data, m5, X, 10)
 
 @test expr1 isa QuadExpr
 
-@test_throws DimensionMismatch mismatch_expression(simulated_data, m5, X, 500) # too long X_len
-
+@test_throws DimensionMismatch add_mismatch_expression!(model, simulated_data, m5, X, 500) # too long X_len
 simulated_data = [fill(5., 50); fill(15., 50)]
-@test_throws DimensionMismatch mismatch_expression(simulated_data, m5, X, 10) # length of sim and X are not equal
+@test_throws DimensionMismatch add_mismatch_expression!(model, simulated_data, m5, X, 10) # length of sim and X are not equal

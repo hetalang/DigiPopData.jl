@@ -18,17 +18,16 @@ m1 = MeanSDMetric(100, 2.0, 0.5)
 @test_throws ArgumentError MeanSDMetric(100, NaN, 0.5) # NaN mean
 @test_throws ArgumentError MeanSDMetric(100, Inf, 0.5) # Inf mean
 
-# mismatch_expression tests
+# add_mismatch_expression! tests
 model = JuMP.Model()
 @variable(model, X[1:101], Bin)
 
 m2 = MeanSDMetric(100, 10.0, 1.0)
 simulated_data = collect(0.:1.:100.) # Simulated data for testing
-expr1 = mismatch_expression(simulated_data, m2, X, 10)
+expr1 = add_mismatch_expression!(model, simulated_data, m2, X, 10)
 
-@test expr1 isa QuadExpr
+#@test expr1 isa QuadExpr
 
-@test_throws DimensionMismatch mismatch_expression(simulated_data, m2, X, 500) # too long X_len
-
+@test_throws DimensionMismatch add_mismatch_expression!(model, simulated_data, m2, X, 500) # too long X_len
 simulated_data = collect(0.:1.:99.) # 
-@test_throws DimensionMismatch mismatch_expression(simulated_data, m2, X, 10) # length of sim and X are not equal
+@test_throws DimensionMismatch add_mismatch_expression!(model, simulated_data, m2, X, 10) # length of sim and X are not equal

@@ -100,38 +100,6 @@ function mismatch(sim::AbstractVector{<:Real}, dp::QuantileMetric)
     return loss
 end
 
-function mismatch_expression(
-    sim::AbstractVector{<:Real},
-    dp::QuantileMetric,
-    X::Vector{VariableRef},
-    X_len::Int
-)
-    validate(sim, dp)
-    # Check that the length of sim and X are equal
-    length(sim) == length(X) || throw(DimensionMismatch("Length of simulation data and X must be equal"))
-    # Check that X_len is less than sim
-    X_len <= length(sim) || throw(DimensionMismatch("X_len must be less than or equal to the length of simulation data"))
-
-    len = sum(dp.group_active) - 1 # degree of freedom
-    not_nan = .!isnan.(sim) # mark NaN values
-
-    # calculate the loss
-    values_ext = [-Inf; dp.values; Inf]
-    diff = AffExpr[]
-    for i in 1:length(dp.rates)
-        mask = (values_ext[i] .<= sim .< values_ext[i+1]) .&& not_nan # to sort to specific group
-        expr = sum(mask .* X) - dp.rates[i] * X_len
-        push!(diff, expr)
-    end
-
-    ### TODO: check if the non-active groups are empty
-    
-    diff_active = diff[dp.group_active][1:len] # all non zero without last one   
-    loss = diff_active' * dp.cov_inv * diff_active / X_len
-
-    loss
-end
-
 function add_mismatch_expression!(
     prob::GenericModel,
     sim::AbstractVector{<:Real},

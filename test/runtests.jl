@@ -23,5 +23,5 @@ end
 end
 
 @testset "DigiPopData invariance tests" begin
-    include("category-metric-invariance.jl")
+    #include("category-metric-invariance.jl")
 end

@@ -5,7 +5,7 @@ include("metric-types/abstract-metric.jl")
 include("metric-binding.jl")
 include("loaders.jl")
 
-export mismatch, mismatch_expression
+export mismatch, add_mismatch_expression!
 export MetricBinding, get_loss
 export parse_metric_bindings
 

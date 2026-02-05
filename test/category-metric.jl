@@ -29,16 +29,15 @@ m2 = CategoryMetric(100, ["A", "B", "C"], [0.5, 0.5, 0.0])
 @test_throws ArgumentError CategoryMetric(100, ["A"], [1.0])
 @test_throws ArgumentError CategoryMetric(100, String[], Float64[]) # emty groups and rates
 
-# mismatch_expression tests
+# add_mismatch_expression! tests
 model = JuMP.Model()
 @variable(model, X[1:101], Bin)
 m3 = CategoryMetric(100, ["A", "B", "C"], [0.5, 0.3, 0.2])
 simulated_data = [fill("A", 50); fill("B", 50); "C"]
-expr1 = mismatch_expression(simulated_data, m3, X, 10)
+expr1 = add_mismatch_expression!(model, simulated_data, m3, X, 10)
 
 @test expr1 isa QuadExpr
 
-@test_throws DimensionMismatch mismatch_expression(simulated_data, m3, X, 500) # too long X_len
-
+@test_throws DimensionMismatch add_mismatch_expression!(model, simulated_data, m3, X, 500) # too long X_len
 simulated_data = [fill("A", 50); fill("B", 50)]
-@test_throws DimensionMismatch mismatch_expression(simulated_data, m3, X, 10) # length of sim and X are not equal
+@test_throws DimensionMismatch add_mismatch_expression!(model, simulated_data, m3, X, 10) # length of sim and X are not equal
