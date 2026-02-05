@@ -99,6 +99,8 @@ function add_mismatch_expression!(
     length(sim) == length(X) || throw(DimensionMismatch("Length of simulation data and X must be equal"))
     # Check that X_len is less than sim
     X_len <= length(sim) || throw(DimensionMismatch("X_len must be less than or equal to the length of simulation data"))
+    
+    _init_loss(prob)
 
     len = sum(dp.group_active) - 1 # degree of freedom
     rates_len = length(dp.rates)
@@ -116,6 +118,7 @@ function add_mismatch_expression!(
     diff_active = z_srv[dp.group_active][1:len] # all non zero without last one
     loss = diff_active' * dp.cov_inv * diff_active / X_len # quadratic form
     
+    push!(prob[:LOSS], loss)
     return loss
 end
 

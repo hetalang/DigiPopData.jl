@@ -100,6 +100,8 @@ function add_mismatch_expression!(
     # Check that X_len is less than sim
     X_len <= length(sim) || throw(DimensionMismatch("X_len must be less than or equal to the length of simulation data"))
     
+    _init_loss(prob)
+
     len = sum(dp.group_active) - 1
 
     # calculate the loss
@@ -113,6 +115,7 @@ function add_mismatch_expression!(
     diff_active = z_ctg[dp.group_active][1:len] # all non zero without last one    
     loss = diff_active' * dp.cov_inv * diff_active / X_len
 
+    push!(prob[:LOSS], loss)
     loss
 end
 

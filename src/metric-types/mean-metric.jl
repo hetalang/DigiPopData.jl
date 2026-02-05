@@ -53,11 +53,18 @@ function add_mismatch_expression!(
     length(sim) == length(X) || throw(DimensionMismatch("Length of simulation data and X must be equal"))
     # Check that X_len is less than sim
     X_len <= length(sim) || throw(DimensionMismatch("X_len must be less than or equal to the length of simulation data"))
+    
+    _init_loss(prob)
 
-    z_expr = sum(sim .* X) / X_len - dp.mean
-    loss = @variable(prob)
-    @constraint(prob, loss == X_len * z_expr^2 / dp.sd^2)
+    #z_expr = sum(sim .* X) / X_len - dp.mean # Lin
+    #loss = @variable(prob)
+    #@constraint(prob, loss == X_len * z_expr^2 / dp.sd^2) # Quadr
 
+    z_mu = @variable(prob)
+    @constraint(prob, z_mu == sum(sim .* X) / X_len - dp.mean)
+    loss = X_len * z_mu^2 / dp.sd^2
+
+    push!(prob[:LOSS], loss)
     loss 
 end
 

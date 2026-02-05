@@ -71,3 +71,9 @@ The concrete validation rules depend on the subtype of `AbstractMetric`.
 function validate(sim::AbstractVector{<:Real}, dp::AbstractMetric)
     throw(MethodError(validate, (sim, dp))) # fallback
 end
+
+function _init_loss(prob::GenericModel)
+    if !haskey(prob, :LOSS)
+        prob[:LOSS] = Any[]
+    end
+end
