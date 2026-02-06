@@ -1,7 +1,7 @@
 name = "DigiPopData"
 uuid = "0d51003c-419e-4b70-b590-68fae1e54ab3"
 authors = ["Evgeny Metelkin", "Ivan Borisov"]
-version = "0.1.0"
+version = "0.2.0"
 description = "Data prep and visualization tools for Virtual Patient QSP modeling"
 
 [deps]
