@@ -9,11 +9,11 @@ Abstract super‑type for all *metric* descriptors used by DigiPopData.
 
 ## Purpose
 Group together heterogeneous metrics (Mean, MeanSD, Category, …) so they
-can share the same dispatch points (`mismatch`, `mismatch_expression`, `get_loss`, ...).
+can share the same dispatch points (`mismatch`, `add_mismatch_expression!`, `get_loss`, ...).
 
 ## Required interface
 - `mismatch`: Function to calculate the loss for a given metric and simulated data as a value.
-- `mismatch_expression`: Function to calculate the loss for a given metric and simulated data as an expression.
+- `add_mismatch_expression!`: Function to calculate the loss for a given metric and simulated data as an expression.
 - `validate`: Function to validate the simulated data against the metric.
 
 The parsing rules for the metric type are defined in the `PARSERS` dictionary to convert from `DataFrame`

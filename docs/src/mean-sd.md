@@ -16,7 +16,7 @@ The loss is implemented as a sum of two terms:
 - an SD-matching term that penalizes deviation of the simulated second central moment
   from the target variance.
 
-**Implementation note.** For consistency between `mismatch` and `mismatch_expression`, the simulated variance proxy is computed around the *target mean* rather than the simulated mean.
+**Implementation note.** For consistency between `mismatch` and `add_mismatch_expression!`, the simulated variance proxy is computed around the *target mean* rather than the simulated mean.
 This keeps the expression affine in binary selection variables (see below) and leads to a quadratic MIQP objective.
 
 ## Example

@@ -60,7 +60,7 @@ Depending on the task (e.g. parameter calibration, virtual population selection,
 A standard entry point is the `get_loss` function, which takes a `Vector{MetricBinding}` and a table of individual simulations
 and returns a scalar loss value representing the overall mismatch.
 
-For finer-grained control, metric-level methods such as `mismatch` and `mismatch_expression` allow evaluation of individual metrics independently.
+For finer-grained control, metric-level methods such as `mismatch` and `add_mismatch_expression!` allow evaluation of individual metrics independently.
 Users may also implement custom analysis or optimization procedures that operate directly on `MetricBinding` objects and individual simulation data.
 
 ## Typical use case

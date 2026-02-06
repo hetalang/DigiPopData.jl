@@ -37,7 +37,7 @@ function mismatch(sim::AbstractVector{<:Real}, dp::MeanSDMetric)
 
     mu_virt = sum(sim) / length(sim)
     #sigma_sq_virt = sum(sim .^2) / length(sim) - mu_virt^2
-    # to satisfy similar results for mismatch and mismatch_expression
+    # to satisfy similar results for mismatch and add_mismatch_expression!
     sigma_sq_virt = sum((sim .- dp.mean) .^2) / length(sim) # AffExpr
     loss1 = length(sim) * (mu_virt - dp.mean)^2 / dp.sd^2 
     loss2 = length(sim) / 2 * (sigma_sq_virt - dp.sd^2)^2 / dp.sd^4
