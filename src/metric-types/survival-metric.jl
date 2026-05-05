@@ -122,6 +122,41 @@ function add_mismatch_expression!(
     return loss
 end
 
+function add_mismatch_expression!(
+    prob::GenericModel,
+    sim::Vector{Float64},
+    dp::SurvivalMetric,
+    X::Vector{VariableRef}
+)
+    validate(sim, dp)
+    # Check that the length of sim and X are equal
+    length(sim) == length(X) || throw(DimensionMismatch("Length of simulation data and X must be equal"))
+    
+    _init_loss(prob)
+
+    len = sum(dp.group_active) - 1 # degree of freedom
+    rates_len = length(dp.rates)
+
+    # calculate the loss
+    values_ext = [-Inf; dp.values; Inf] # add 0 and 1 to the levels
+    z_srv = @variable(prob, [i=1:rates_len] )
+
+    z_len = @variable(prob)
+    @constraint(prob, z_len == sum(X))
+    for i in 1:rates_len
+        mask = Int.(values_ext[i] .< sim .<= values_ext[i+1])
+        @constraint(prob, z_srv[i] == sum(mask .* X) - round(Int, dp.rates[i] * z_len))
+    end
+
+    ### TODO: check if the non-active groups are empty
+    
+    diff_active = z_srv[dp.group_active][1:len] # all non zero without last one
+    loss = diff_active' * dp.cov_inv * diff_active / z_len # quadratic form
+    
+    push!(prob[:LOSS], loss)
+    return loss
+end
+
 function validate(sim::Vector{Float64}, dp::SurvivalMetric)
     # Check that the simulation data is not empty
     isempty(sim) && 

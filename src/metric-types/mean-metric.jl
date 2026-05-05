@@ -68,6 +68,33 @@ function add_mismatch_expression!(
     loss 
 end
 
+function add_mismatch_expression!(
+    prob::GenericModel,
+    sim::AbstractVector{<:Real},
+    dp::MeanMetric,
+    X::Vector{VariableRef}
+)
+
+    validate(sim, dp)
+    # Check that the length of sim and X are equal
+    length(sim) == length(X) || throw(DimensionMismatch("Length of simulation data and X must be equal"))
+    
+    _init_loss(prob)
+
+    #z_expr = sum(sim .* X) / X_len - dp.mean # Lin
+    #loss = @variable(prob)
+    #@constraint(prob, loss == X_len * z_expr^2 / dp.sd^2) # Quadr
+
+    z_mu = @variable(prob)
+    z_len = @variable(prob)
+    @constraint(prob, z_len == sum(X))
+    @constraint(prob, z_mu == sum(sim .* X) / z_len - dp.mean)
+    loss = z_len * z_mu^2 / dp.sd^2
+
+    push!(prob[:LOSS], loss)
+    loss 
+end
+
 function validate(sim::AbstractVector{<:Real}, ::MeanMetric)
     # length must be >= 3
     length(sim) >= 3 || 

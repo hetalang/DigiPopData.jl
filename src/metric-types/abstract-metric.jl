@@ -48,7 +48,7 @@ end
 - `sim::AbstractVector{<:Real}`: A vector of simulated data.
 - `dp::AbstractMetric`: An instance of a metric descriptor (e.g., `MeanMetric`, `CategoryMetric`, etc.).
 - `X::Vector{VariableRef}`: A vector of JuMP variable references.
-- `X_len::Int`: The length of the vector of JuMP variable references.
+- `X_len::Int`: The length of the vector of JuMP variable references. The size of the target VPop. If not provided it will be set to the `sum(X)`.
 
 Return an expression that quantifies the mismatch between simulated data `sim`
 and the target metric `metric`.
@@ -56,6 +56,10 @@ The concrete formula depends on the subtype of `AbstractMetric`.
 """
 function add_mismatch_expression!(prob::GenericModel, sim::AbstractVector{<:Real}, dp::AbstractMetric, X::Vector{VariableRef}, X_len::Int)
     throw(MethodError(add_mismatch_expression!, (prob, sim, dp, X, X_len))) # fallback
+end
+
+function add_mismatch_expression!(prob::GenericModel, sim::AbstractVector{<:Real}, dp::AbstractMetric, X::Vector{VariableRef})
+    throw(MethodError(add_mismatch_expression!, (prob, sim, dp, X))) # fallback
 end
 
 """

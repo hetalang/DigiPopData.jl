@@ -119,6 +119,37 @@ function add_mismatch_expression!(
     loss
 end
 
+function add_mismatch_expression!(
+    prob::GenericModel,
+    sim::AbstractVector{<:AbstractString},
+    dp::CategoryMetric,
+    X::Vector{VariableRef}
+)
+    validate(sim, dp)
+    # Check that the length of sim and X are equal
+    length(sim) == length(X) || throw(DimensionMismatch("Length of simulation data and X must be equal"))
+    
+    _init_loss(prob)
+
+    len = sum(dp.group_active) - 1
+
+    # calculate the loss
+    z_ctg = @variable(prob, [i=1:length(dp.groups)] )\
+    z_len = @variable(prob)
+    @constraint(prob, z_len == sum(X))
+    for i in 1:length(dp.groups)
+        mask = Int.(sim .== dp.groups[i])
+        # adding round as the equations reflect number of persons 
+        @constraint(prob, z_ctg[i] == sum(mask .* X) - round(Int, dp.rates[i] * z_len))
+    end
+
+    diff_active = z_ctg[dp.group_active][1:len] # all non zero without last one    
+    loss = diff_active' * dp.cov_inv * diff_active / z_len
+
+    push!(prob[:LOSS], loss)
+    loss
+end
+
 function validate(
     sim::AbstractVector{<:AbstractString},
     dp::CategoryMetric
