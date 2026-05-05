@@ -134,7 +134,7 @@ function add_mismatch_expression!(
     len = sum(dp.group_active) - 1
 
     # calculate the loss
-    z_ctg = @variable(prob, [i=1:length(dp.groups)] )\
+    z_ctg = @variable(prob, [i=1:length(dp.groups)] )
     z_len = @variable(prob)
     @constraint(prob, z_len == sum(X))
     for i in 1:length(dp.groups)
