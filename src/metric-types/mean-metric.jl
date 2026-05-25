@@ -7,16 +7,23 @@ A metric that compares the mean of a simulated dataset to a target mean.
 - `size::Int`: The size of the dataset.
 - `mean::Float64`: The target mean value.
 - `sd::Float64`: The target standard deviation value.
+- `weight::Float64`: The multiplier applied to this metric's loss.
 """
 struct MeanMetric <: AbstractMetric
     size::Int
     mean::Float64
     sd::Float64
+    weight::Float64
 
-    MeanMetric(size::Int, mean::Float64, sd::Float64) = begin
+    MeanMetric(size::Int, mean::Float64, sd::Float64; weight::Real = DEFAULT_METRIC_WEIGHT) = begin
+        weight = Float64(weight)
         _validate_mean(mean, sd)
-        new(size, mean, sd)
+        _validate_weight(weight)
+        new(size, mean, sd, weight)
     end
+
+    MeanMetric(size::Int, mean::Float64, sd::Float64, weight::Real) =
+        MeanMetric(size, mean, sd; weight=weight)
 end
 
 _validate_mean(mean::Float64, sd::Float64) = begin
@@ -36,7 +43,7 @@ function mismatch(sim::AbstractVector{<:Real}, dp::MeanMetric)
     validate(sim, dp)
 
     mu_virt = sum(sim) / length(sim)
-    loss = length(sim) * (mu_virt - dp.mean)^2 / dp.sd^2
+    loss = dp.weight * length(sim) * (mu_virt - dp.mean)^2 / dp.sd^2
 
     loss
 end
@@ -62,7 +69,7 @@ function add_mismatch_expression!(
 
     z_mu = @variable(prob)
     @constraint(prob, z_mu == sum(sim .* X) / X_len - dp.mean)
-    loss = X_len * z_mu^2 / dp.sd^2
+    loss = dp.weight * X_len * z_mu^2 / dp.sd^2
 
     push!(prob[:LOSS], loss)
     loss 
@@ -86,8 +93,9 @@ PARSERS["mean"] = (row) -> begin
     size = row[Symbol("metric.size")]
     mean = row[Symbol("metric.mean")] |> safe_float
     sd = row[Symbol("metric.sd")] |> safe_float
+    weight = _parse_metric_weight(row)
 
-    MeanMetric(size, mean, sd)
+    MeanMetric(size, mean, sd; weight=weight)
 end
 
 safe_float(x) = x isa String ? parse(Float64, x) : float(x)

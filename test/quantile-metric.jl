@@ -4,10 +4,16 @@ m1 = QuantileMetric(100, [0.5], [10.])
 @test m1.group_active == [true, true] # all groups are active
 @test all(m1.cov_inv .≈ [4.;;])
 @test m1.skip_nan == false
+@test m1.weight == 1.0
 
 @test mismatch([1., 2., 3., 11., 12., 13.], m1) ≈ 0.
 @test mismatch([-Inf, 2., 3., 11., 12., Inf], m1) ≈ 0.
 @test mismatch([1., 2., 3., 4., 5., 6.], m1) ≈ 36.
+
+m_weighted = QuantileMetric(100, [0.5], [10.]; weight=2.0)
+@test m_weighted.weight == 2.0
+@test mismatch([1., 2., 3., 4., 5., 6.], m_weighted) ≈ 72.
+
 @test_throws ArgumentError mismatch([1., 2., 3., 4., 5., 6., NaN], m1)
 @test_throws ArgumentError mismatch(Float64[], m1)
 
@@ -41,6 +47,7 @@ m3 = QuantileMetric(100, [0.25, 0.5, 0.5, 0.75], [1., 10., 20., 100.])
 @test_throws ArgumentError QuantileMetric(100, [0.1, 0.5, 0.9], [1., 10., NaN]) # NaN rate
 @test_throws DimensionMismatch QuantileMetric(100, [0.5, 0.3, 0.1], [1., 10., 100., 1000.]) # wrong length
 @test_throws ArgumentError QuantileMetric(100, Float64[], Float64[]) # empty
+@test_throws ArgumentError QuantileMetric(100, [0.5], [10.]; weight=-1.0) # negative weight
 
 # add_mismatch_expression! tests
 model = JuMP.Model()

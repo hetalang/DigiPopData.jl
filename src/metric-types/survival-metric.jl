@@ -8,9 +8,10 @@
 - `cov_inv::Matrix{Float64}`: The inverse of the covariance matrix of the groups.
 - `group_active::Vector{Bool}`: A boolean vector indicating which groups are active (non-zero rates).
 - `rates::Vector{Float64}`: The probabilities of each group.
+- `weight::Float64`: The multiplier applied to this metric's loss.
 
 ## Constructor
-- `SurvivalMetric(size::Int, levels::Vector{Float64}, values::Vector{Float64})`: Creates a new instance of SurvivalMetric. 
+- `SurvivalMetric(size::Int, levels::Vector{Float64}, values::Vector{Float64}; weight::Real = 1.0)`: Creates a new instance of SurvivalMetric.
   It validates the input data and calculates the inverse covariance matrix.
 """
 struct SurvivalMetric <: AbstractMetric
@@ -21,9 +22,12 @@ struct SurvivalMetric <: AbstractMetric
     cov_inv::Matrix{Float64} # inverse of the covariance matrix of the groups
     group_active::Vector{Bool}
     rates::Vector{Float64} # rates of the groups
+    weight::Float64
 
-    SurvivalMetric(size::Int, levels::Vector{Float64}, values::Vector{Float64}) = begin
+    SurvivalMetric(size::Int, levels::Vector{Float64}, values::Vector{Float64}; weight::Real = DEFAULT_METRIC_WEIGHT) = begin
+        weight = Float64(weight)
         _validate_survival(levels, values)
+        _validate_weight(weight)
 
         # current level minus prev level
         extended_levels = [1; levels; 0.0]
@@ -40,8 +44,11 @@ struct SurvivalMetric <: AbstractMetric
         # it is possible to calculate them without the inverse matrix
         # 1/rates[group_active][end]
 
-        new(size, levels, values, cov_inv, group_active, rates)
+        new(size, levels, values, cov_inv, group_active, rates, weight)
     end
+
+    SurvivalMetric(size::Int, levels::Vector{Float64}, values::Vector{Float64}, weight::Real) =
+        SurvivalMetric(size, levels, values; weight=weight)
 end
 
 _validate_survival(levels::Vector{Float64}, values::Vector{Float64}) = begin
@@ -82,7 +89,7 @@ function mismatch(sim::Vector{Float64}, dp::SurvivalMetric)
     # calculate the loss
     diff = count_virt .- dp.rates * length(sim)
     diff_active = diff[dp.group_active][1:len] # all non zero without last one
-    loss = diff_active' * dp.cov_inv * diff_active / length(sim)
+    loss = dp.weight * diff_active' * dp.cov_inv * diff_active / length(sim)
    
     return loss
 end
@@ -116,7 +123,7 @@ function add_mismatch_expression!(
     ### TODO: check if the non-active groups are empty
     
     diff_active = z_srv[dp.group_active][1:len] # all non zero without last one
-    loss = diff_active' * dp.cov_inv * diff_active / X_len # quadratic form
+    loss = dp.weight * diff_active' * dp.cov_inv * diff_active / X_len # quadratic form
     
     push!(prob[:LOSS], loss)
     return loss
@@ -142,6 +149,7 @@ PARSERS["survival"] = (row) -> begin
     levels = parse.(Float64, split(levels_string, ";"))
     values_string = row[Symbol("metric.values")]
     values = parse.(Float64, split(values_string, ";"))
+    weight = _parse_metric_weight(row)
 
-    SurvivalMetric(size, levels, values)
+    SurvivalMetric(size, levels, values; weight=weight)
 end

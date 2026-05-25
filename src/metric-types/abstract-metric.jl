@@ -1,6 +1,23 @@
 import JuMP: VariableRef, AffExpr, GenericModel, @variable, @constraint
 
 const RATE_TOL = 1e-6 # value to comare rates to 1 or 0
+const DEFAULT_METRIC_WEIGHT = 1.0
+
+function _validate_weight(weight::Float64)
+    weight >= 0 || throw(ArgumentError("Weight must be non-negative"))
+    isfinite(weight) || throw(ArgumentError("Weight must be finite"))
+    !isnan(weight) || throw(ArgumentError("Weight must not be NaN"))
+end
+
+function _safe_weight(x)
+    if x === missing || x == ""
+        return DEFAULT_METRIC_WEIGHT
+    end
+
+    x isa AbstractString ? parse(Float64, x) : Float64(x)
+end
+
+_parse_metric_weight(row) = _safe_weight(get(row, Symbol("metric.weight"), DEFAULT_METRIC_WEIGHT))
 
 """
     AbstractMetric

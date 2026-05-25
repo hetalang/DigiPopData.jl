@@ -18,9 +18,10 @@ CategoryMetric is a metric descriptor for categorical data. It is based on polin
 - `rates::Vector{Float64}`: The probabilities of each group.
 - `cov_inv::Matrix{Float64}`: The inverse of the covariance matrix of the groups.
 - `group_active::Vector{Bool}`: A boolean vector indicating which groups are active (non-zero rates).
+- `weight::Float64`: The multiplier applied to this metric's loss.
 
 ## Constructor
-- `CategoryMetric(size::Int, groups::Vector{String}, rates::Vector{Float64})`: Creates a new instance of CategoryMetric. 
+- `CategoryMetric(size::Int, groups::Vector{String}, rates::Vector{Float64}; weight::Real = 1.0)`: Creates a new instance of CategoryMetric.
   It validates the input data and calculates the inverse covariance matrix.
 """
 struct CategoryMetric <: AbstractMetric
@@ -29,9 +30,12 @@ struct CategoryMetric <: AbstractMetric
     rates::Vector{Float64} # probabilities of each group
     cov_inv::Matrix{Float64} # inverse of the covariance matrix of the groups
     group_active::Vector{Bool}
+    weight::Float64
     
-    function CategoryMetric(size::Int, groups::Vector{String}, rates::Vector{Float64})
+    function CategoryMetric(size::Int, groups::Vector{String}, rates::Vector{Float64}; weight::Real = DEFAULT_METRIC_WEIGHT)
+        weight = Float64(weight)
         _validate_category(groups, rates)
+        _validate_weight(weight)
 
         # active groups are those with non-zero rates
         group_active = .!isapprox.(rates, 0., atol=RATE_TOL) # not 0
@@ -42,8 +46,11 @@ struct CategoryMetric <: AbstractMetric
         cov = diag - rates_reduced * rates_reduced'
         cov_inv = inv(cov)
 
-        new(size, groups, rates, cov_inv, group_active)
+        new(size, groups, rates, cov_inv, group_active, weight)
     end
+
+    CategoryMetric(size::Int, groups::Vector{String}, rates::Vector{Float64}, weight::Real) =
+        CategoryMetric(size, groups, rates; weight=weight)
 end
 
 _validate_category(groups::Vector{String}, rates::Vector{Float64}) = begin
@@ -82,7 +89,7 @@ function mismatch(
     # calculate the loss
     diff = count_virt .- dp.rates * length(sim)
     diff_active = diff[dp.group_active][1:len] # all non zero without last one
-    loss = diff_active' * dp.cov_inv * diff_active / length(sim)
+    loss = dp.weight * diff_active' * dp.cov_inv * diff_active / length(sim)
 
     return loss
 end
@@ -113,7 +120,7 @@ function add_mismatch_expression!(
     end
 
     diff_active = z_ctg[dp.group_active][1:len] # all non zero without last one    
-    loss = diff_active' * dp.cov_inv * diff_active / X_len
+    loss = dp.weight * diff_active' * dp.cov_inv * diff_active / X_len
 
     push!(prob[:LOSS], loss)
     loss
@@ -150,6 +157,7 @@ PARSERS["category"] = (row) -> begin
     groups = split(groups_string, ";") .|> String
     rates_string = row[Symbol("metric.rates")]
     rates = parse.(Float64, split(rates_string, ";"))
+    weight = _parse_metric_weight(row)
 
-    CategoryMetric(size, groups, rates)
+    CategoryMetric(size, groups, rates; weight=weight)
 end

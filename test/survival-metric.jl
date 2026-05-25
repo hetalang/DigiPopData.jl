@@ -3,10 +3,16 @@ m1 = SurvivalMetric(100, [0.75, 0.5, 0.25], [24., 48., 72.])
 
 @test m1.group_active == [true, true, true, true]
 @test all(m1.cov_inv .≈ [8. 4. 4.; 4. 8. 4.; 4. 4. 8.])
+@test m1.weight == 1.0
 
 @test mismatch([12., 36., 60., 84.], m1) ≈ 0.
 @test mismatch([0., 36., 60., Inf], m1) ≈ 0.
 @test mismatch([12., 36., 60., 12.], m1) ≈ 2.
+
+m_weighted = SurvivalMetric(100, [0.75, 0.5, 0.25], [24., 48., 72.]; weight=3.0)
+@test m_weighted.weight == 3.0
+@test mismatch([12., 36., 60., 12.], m_weighted) ≈ 6.
+
 @test_throws ArgumentError mismatch([12., 36., 60., NaN], m1)
 @test_throws ArgumentError mismatch(Float64[], m1)
 
@@ -41,6 +47,7 @@ m4 = SurvivalMetric(100, [0.75, 0.5, 0.25, 0.0], [24., 48., 72., 120.])
 @test_throws ArgumentError SurvivalMetric(100, [0.5, 0.3, 0.1], [1., 10., NaN]) # NaN rate
 @test_throws DimensionMismatch SurvivalMetric(100, [0.5, 0.3, 0.1], [1., 10., 100., 1000.]) # wrong length
 @test_throws ArgumentError SurvivalMetric(100, Float64[], Float64[]) # empty
+@test_throws ArgumentError SurvivalMetric(100, [0.75, 0.5, 0.25], [24., 48., 72.]; weight=-1.0) # negative weight
 
 # add_mismatch_expression! tests
 model = JuMP.Model()

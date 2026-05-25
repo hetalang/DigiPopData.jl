@@ -1,8 +1,13 @@
 # correct input
 m1 = MeanMetric(100, 2.0, 0.5)
 
+@test m1.weight == 1.0
 @test isapprox(mismatch([1.0, 2.0, 3.0], m1), 0.) # 0.0 = 3 * (2 - 2)^2 / 0.5^2
 @test isapprox(mismatch([2., 3., 4.], m1), 12.0) # 12.0 = 3 * (3 - 2)^2 / 0.5^2
+
+m_weighted = MeanMetric(100, 2.0, 0.5; weight=2.0)
+@test m_weighted.weight == 2.0
+@test isapprox(mismatch([2., 3., 4.], m_weighted), 24.0)
 
 @test_throws ArgumentError mismatch(Float64[], m1) # too short
 @test_throws ArgumentError mismatch([1., 2.], m1) # too short
@@ -17,6 +22,7 @@ m1 = MeanMetric(100, 2.0, 0.5)
 @test_throws ArgumentError MeanMetric(100, 2.0, Inf) # Inf sd
 @test_throws ArgumentError MeanMetric(100, NaN, 0.5) # NaN mean
 @test_throws ArgumentError MeanMetric(100, Inf, 0.5) # Inf mean
+@test_throws ArgumentError MeanMetric(100, 2.0, 0.5; weight=-1.0) # negative weight
 
 # add_mismatch_expression! tests
 model = JuMP.Model()
