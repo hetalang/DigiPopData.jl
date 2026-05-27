@@ -22,7 +22,8 @@ mb = MetricBinding(
         0.2                 # standard deviation
     ),
     "conc_t24",             # endpoint column in simulation data
-    true                    # active flag
+    true,                   # active flag
+    2.0                     # optional loss weight
 )
 ```
 
@@ -41,16 +42,17 @@ A metric table typically includes:
 - `endpoint` — name of the simulation output column used for comparison  
 - `metric.type` — metric type (e.g. `mean`, `mean_sd`, `category`, `quantile`, `survival`)  
 - `metric.size` — experimental sample size
+- `metric.weight` — optional multiplier applied to this row's contribution to the total loss
 - `metric.<prop>` — additional metric-specific properties, see more details in [Overview](metrics.md)
 
 ## Example table
 
 The table below defines two metrics for the same scenario `Tx`:
 
-| id | active | scenario | metric.type | metric.size | endpoint | metric.mean | metric.sd | metric.levels | metric.values |
-|---|---:|---|---|---:|---|---:|---:|---:|---:|
-| m\_conc24\_mean\_Tx | 1 | Tx | mean | 40 | conc_t24 | 2.10 | 0.2 |  |  |
-| m\_biomarker\_q\_Tx | 1 | Tx | quantile | 40 | biomarker |  |  | 0.25;0.50;0.75 | 0.1;1.35;10.1 |
+| id | active | scenario | metric.type | metric.size | metric.weight | endpoint | metric.mean | metric.sd | metric.levels | metric.values |
+|---|---:|---|---|---:|---:|---|---:|---:|---:|---:|
+| m\_conc24\_mean\_Tx | 1 | Tx | mean | 40 | 1.0 | conc_t24 | 2.10 | 0.2 |  |  |
+| m\_biomarker\_q\_Tx | 1 | Tx | quantile | 40 | 0.5 | biomarker |  |  | 0.25;0.50;0.75 | 0.1;1.35;10.1 |
 
 Interpretation:
 

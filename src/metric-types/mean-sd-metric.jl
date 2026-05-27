@@ -7,23 +7,16 @@ A metric that compares the mean and standard deviation (SD) of a simulated datas
 - `size::Int`: The size of the dataset.
 - `mean::Float64`: The target mean value.
 - `sd::Float64`: The target standard deviation value.
-- `weight::Float64`: The multiplier applied to this metric's loss.
 """
 struct MeanSDMetric <: AbstractMetric
     size::Int
     mean::Float64
     sd::Float64
-    weight::Float64
 
-    MeanSDMetric(size::Int, mean::Float64, sd::Float64; weight::Real = DEFAULT_METRIC_WEIGHT) = begin
-        weight = Float64(weight)
+    MeanSDMetric(size::Int, mean::Float64, sd::Float64) = begin
         _validate_mean_sd(mean, sd)
-        _validate_weight(weight)
-        new(size, mean, sd, weight)
+        new(size, mean, sd)
     end
-
-    MeanSDMetric(size::Int, mean::Float64, sd::Float64, weight::Real) =
-        MeanSDMetric(size, mean, sd; weight=weight)
 end
 
 _validate_mean_sd(mean::Float64, sd::Float64) = begin
@@ -49,10 +42,10 @@ function mismatch(sim::AbstractVector{<:Real}, dp::MeanSDMetric)
     loss1 = length(sim) * (mu_virt - dp.mean)^2 / dp.sd^2 
     loss2 = length(sim) / 2 * (sigma_sq_virt - dp.sd^2)^2 / dp.sd^4
 
-    dp.weight * (loss1 + loss2)
+    loss1 + loss2
 end
 
-function add_mismatch_expression!(
+function mismatch_expression(
     prob::GenericModel,
     sim::AbstractVector{<:Real},
     dp::MeanSDMetric,
@@ -64,8 +57,6 @@ function add_mismatch_expression!(
     length(sim) == length(X) || throw(DimensionMismatch("Length of simulation data and X must be equal"))
     # Check that X_len is less than sim
     X_len <= length(sim) || throw(DimensionMismatch("X_len must be less than or equal to the length of simulation data"))
-    
-    _init_loss(prob)
 
     z_mu = @variable(prob)
     z_sq = @variable(prob)
@@ -77,9 +68,8 @@ function add_mismatch_expression!(
     @constraint(prob, z_mu_loss == X_len * (z_mu)^2 / dp.sd^2)
     @constraint(prob, z_sq_loss == X_len / 2 * (z_sq)^2 / dp.sd^4)
 
-    loss = dp.weight * (z_mu_loss + z_sq_loss)
+    loss = z_mu_loss + z_sq_loss
 
-    push!(prob[:LOSS], loss)
     loss
 end
 
@@ -105,7 +95,6 @@ PARSERS["mean_sd"] = (row) -> begin
     size = row[Symbol("metric.size")]
     mean = row[Symbol("metric.mean")] |> safe_float
     sd = row[Symbol("metric.sd")] |> safe_float
-    weight = _parse_metric_weight(row)
 
-    MeanSDMetric(size, mean, sd; weight=weight)
+    MeanSDMetric(size, mean, sd)
 end

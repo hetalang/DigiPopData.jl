@@ -20,10 +20,9 @@ QuantileMetric is a metric descriptor for quantile data. It is based on the quan
 - `cov_inv::Matrix{Float64}`: The inverse of the covariance matrix of the groups.
 - `group_active::Vector{Bool}`: A boolean vector indicating which groups are active (non-zero rates).
 - `rates::Vector{Float64}`: The probabilities of each group.
-- `weight::Float64`: The multiplier applied to this metric's loss.
 
 ## Constructor
-- `QuantileMetric(size::Int, levels::Vector{Float64}, values::Vector{Float64}; skip_nan::Bool = false, weight::Real = 1.0)`: Creates a new instance of QuantileMetric.
+- `QuantileMetric(size::Int, levels::Vector{Float64}, values::Vector{Float64}; skip_nan::Bool = false)`: Creates a new instance of QuantileMetric.
   It validates the input data and calculates the inverse covariance matrix.
 
 """
@@ -36,12 +35,9 @@ struct QuantileMetric <: AbstractMetric
     cov_inv::Matrix{Float64} # inverse of the covariance matrix of the groups
     group_active::Vector{Bool}
     rates::Vector{Float64} # rates of the groups
-    weight::Float64
 
-    QuantileMetric(size::Int, levels::Vector{Float64}, values::Vector{Float64}; skip_nan::Bool = false, weight::Real = DEFAULT_METRIC_WEIGHT) = begin
-        weight = Float64(weight)
+    QuantileMetric(size::Int, levels::Vector{Float64}, values::Vector{Float64}; skip_nan::Bool = false) = begin
         _validate_quantile(levels, values)
-        _validate_weight(weight)
 
         extended_levels = [0; levels; 1.0]
         rates = [extended_levels[i+1] - extended_levels[i] for i in 1:length(levels) + 1]
@@ -53,11 +49,8 @@ struct QuantileMetric <: AbstractMetric
         cov = diag - rates_reduced * rates_reduced'
         cov_inv = inv(cov) # TODO: can be done without the inverse matrix
 
-        new(size, levels, values, skip_nan, cov_inv, group_active, rates, weight)
+        new(size, levels, values, skip_nan, cov_inv, group_active, rates)
     end
-
-    QuantileMetric(size::Int, levels::Vector{Float64}, values::Vector{Float64}, weight::Real; skip_nan::Bool = false) =
-        QuantileMetric(size, levels, values; skip_nan=skip_nan, weight=weight)
 end
 
 function _validate_quantile(levels::Vector{Float64}, values::Vector{Float64})
@@ -102,12 +95,12 @@ function mismatch(sim::AbstractVector{<:Real}, dp::QuantileMetric)
     # calculate the loss
     diff = count_virt .- dp.rates * length(sim) # full count including NaN values
     diff_active = diff[dp.group_active][1:len] # all non zero without last one
-    loss = dp.weight * diff_active' * dp.cov_inv * diff_active # quadratic form
+    loss = diff_active' * dp.cov_inv * diff_active # quadratic form
 
     return loss
 end
 
-function add_mismatch_expression!(
+function mismatch_expression(
     prob::GenericModel,
     sim::AbstractVector{<:Real},
     dp::QuantileMetric,
@@ -119,8 +112,6 @@ function add_mismatch_expression!(
     length(sim) == length(X) || throw(DimensionMismatch("Length of simulation data and X must be equal"))
     # Check that X_len is less than sim
     X_len <= length(sim) || throw(DimensionMismatch("X_len must be less than or equal to the length of simulation data"))
-    
-    _init_loss(prob)
 
     len = sum(dp.group_active) - 1 # degree of freedom
     not_nan = .!isnan.(sim) # mark NaN values
@@ -136,9 +127,8 @@ function add_mismatch_expression!(
     ### TODO: check if the non-active groups are empty
     
     diff_active = z_quant[dp.group_active][1:len] # all non zero without last one   
-    loss = dp.weight * diff_active' * dp.cov_inv * diff_active / X_len
+    loss = diff_active' * dp.cov_inv * diff_active / X_len
 
-    push!(prob[:LOSS], loss)
     loss
 end
 
@@ -165,7 +155,6 @@ PARSERS["quantile"] = (row) -> begin
     skip_nan = typeof(skip_nan_string) == String ?
         parse(Bool, skip_nan_string) : 
         skip_nan_string
-    weight = _parse_metric_weight(row)
 
-    QuantileMetric(size, levels, values; skip_nan=Bool(skip_nan), weight=weight)
+    QuantileMetric(size, levels, values; skip_nan=Bool(skip_nan))
 end

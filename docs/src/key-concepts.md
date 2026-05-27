@@ -61,6 +61,7 @@ A standard entry point is the `get_loss` function, which takes a `Vector{MetricB
 and returns a scalar loss value representing the overall mismatch.
 
 For finer-grained control, metric-level methods such as `mismatch` and `add_mismatch_expression!` allow evaluation of individual metrics independently.
+When called with a `MetricBinding`, these methods apply the binding's loss weight.
 Users may also implement custom analysis or optimization procedures that operate directly on `MetricBinding` objects and individual simulation data.
 
 ## Typical use case

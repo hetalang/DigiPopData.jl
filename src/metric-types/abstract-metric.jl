@@ -26,11 +26,11 @@ Abstract super‑type for all *metric* descriptors used by DigiPopData.
 
 ## Purpose
 Group together heterogeneous metrics (Mean, MeanSD, Category, …) so they
-can share the same dispatch points (`mismatch`, `add_mismatch_expression!`, `get_loss`, ...).
+can share the same dispatch points (`mismatch`, `mismatch_expression`, `get_loss`, ...).
 
 ## Required interface
 - `mismatch`: Function to calculate the loss for a given metric and simulated data as a value.
-- `add_mismatch_expression!`: Function to calculate the loss for a given metric and simulated data as an expression.
+- `mismatch_expression`: Function to calculate the loss for a given metric and simulated data as an expression.
 - `validate`: Function to validate the simulated data against the metric.
 
 The parsing rules for the metric type are defined in the `PARSERS` dictionary to convert from `DataFrame`
@@ -43,36 +43,49 @@ row to specific `Metric` struture. It is used in the `parse_metric_bindings` met
 abstract type AbstractMetric end
 
 """
-    mismatch(sim::AbstractVector{<:Real}, metric::AbstractMetric) -> Float64
+    mismatch(sim::AbstractVector, metric::AbstractMetric) -> Float64
 
 ## Arguments
-- `sim::AbstractVector{<:Real}`: A vector of simulated data.
+- `sim::AbstractVector`: A vector of simulated data.
 - `metric::AbstractMetric`: An instance of a metric descriptor (e.g., `MeanMetric`, `CategoryMetric`, etc.).
 
 Return a loss that quantifies the mismatch between simulated data `sim`
 and the target metric `metric`.  
 The concrete formula depends on the subtype of `AbstractMetric`.
 """
-function mismatch(sim::AbstractVector{<:Real}, metric::AbstractMetric)
+function mismatch(sim::AbstractVector, metric::AbstractMetric)
     throw(MethodError(mismatch, (sim, metric))) # fallback
 end
 
 """
-    add_mismatch_expression!(prob::GenericModel, sim::AbstractVector{<:Real}, dp::AbstractMetric, X::Vector{VariableRef}, X_len::Int) -> QuadExpr
+    mismatch_expression(prob::GenericModel, sim::AbstractVector, dp::AbstractMetric, X::Vector{VariableRef}, X_len::Int) -> QuadExpr
 
 ## Arguments
 - `prob::GenericModel`: A JuMP optimization model.
-- `sim::AbstractVector{<:Real}`: A vector of simulated data.
+- `sim::AbstractVector`: A vector of simulated data.
 - `dp::AbstractMetric`: An instance of a metric descriptor (e.g., `MeanMetric`, `CategoryMetric`, etc.).
 - `X::Vector{VariableRef}`: A vector of JuMP variable references.
 - `X_len::Int`: The length of the vector of JuMP variable references.
 
-Return an expression that quantifies the mismatch between simulated data `sim`
-and the target metric `metric`.
+Return an unweighted expression that quantifies the mismatch between simulated data
+`sim` and the target metric `metric`.
 The concrete formula depends on the subtype of `AbstractMetric`.
 """
-function add_mismatch_expression!(prob::GenericModel, sim::AbstractVector{<:Real}, dp::AbstractMetric, X::Vector{VariableRef}, X_len::Int)
-    throw(MethodError(add_mismatch_expression!, (prob, sim, dp, X, X_len))) # fallback
+function mismatch_expression(prob::GenericModel, sim::AbstractVector, dp::AbstractMetric, X::Vector{VariableRef}, X_len::Int)
+    throw(MethodError(mismatch_expression, (prob, sim, dp, X, X_len))) # fallback
+end
+
+"""
+    add_mismatch_expression!(prob::GenericModel, sim::AbstractVector, dp::AbstractMetric, X::Vector{VariableRef}, X_len::Int) -> QuadExpr
+
+Create a metric mismatch expression, push it to `prob[:LOSS]`, and return it.
+"""
+function add_mismatch_expression!(prob::GenericModel, sim::AbstractVector, dp::AbstractMetric, X::Vector{VariableRef}, X_len::Int)
+    _init_loss(prob)
+
+    loss = mismatch_expression(prob, sim, dp, X, X_len)
+    push!(prob[:LOSS], loss)
+    loss
 end
 
 """

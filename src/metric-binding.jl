@@ -13,6 +13,7 @@ displayed or passed to optimisation / validation routines.
 | `metric`    | `AbstractMetric`         | Metric implementation (`MeanMetric`, `CategoryMetric`, …) |
 | `endpoint`  | `String`                 | Observable / model variable the metric is computed for    |
 | `active`    | `Bool`                   | Whether the binding is enabled (`true` by default)        |
+| `weight`    | `Float64`                | Multiplier applied to this binding's loss                 |
 
 """
 struct MetricBinding
@@ -21,6 +22,46 @@ struct MetricBinding
     metric::AbstractMetric
     endpoint::String
     active::Bool
+    weight::Float64
+
+    function MetricBinding(
+        id::String,
+        scenario::String,
+        metric::AbstractMetric,
+        endpoint::String,
+        active::Bool,
+        weight::Real = DEFAULT_METRIC_WEIGHT,
+    )
+        weight = Float64(weight)
+        _validate_weight(weight)
+
+        new(id, scenario, metric, endpoint, active, weight)
+    end
+end
+
+MetricBinding(
+    id::String,
+    scenario::String,
+    metric::AbstractMetric,
+    endpoint::String,
+    active::Bool;
+    weight::Real = DEFAULT_METRIC_WEIGHT,
+) = MetricBinding(id, scenario, metric, endpoint, active, weight)
+
+mismatch(sim::AbstractVector, b::MetricBinding) = b.weight * mismatch(sim, b.metric)
+
+function add_mismatch_expression!(
+    prob::GenericModel,
+    sim::AbstractVector,
+    b::MetricBinding,
+    X::Vector{VariableRef},
+    X_len::Int,
+)
+    _init_loss(prob)
+
+    loss = b.weight * mismatch_expression(prob, sim, b.metric, X, X_len)
+    push!(prob[:LOSS], loss)
+    loss
 end
 
 # TODO: for future use, when we need check all data before we start calculation
@@ -46,7 +87,7 @@ end
 Calculate the loss for a given set of metric bindings and a simulated DataFrame.
 The function iterates over the metric bindings, selecting the relevant data from the simulated DataFrame
  based on the scenario and endpoint specified in each binding. It then computes the loss using the `mismatch`
- function defined in the metric.
+ function defined for the binding.
 
 ## Arguments
 - `simulated::DataFrame`: A DataFrame containing the simulated data.
@@ -62,7 +103,7 @@ function get_loss(simulated::DataFrame, metric_bindings::Vector{MetricBinding})
         !b.active && continue # skip inactive metric bindings
         # select only endpoint which refers to scenario
         selected = simulated[simulated.scenario .== b.scenario, b.endpoint]
-        loss += mismatch(selected, b.metric)
+        loss += mismatch(selected, b)
     end
 
     return loss

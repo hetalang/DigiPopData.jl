@@ -1,13 +1,8 @@
 # correct input
 m1 = MeanSDMetric(100, 2.0, 0.5)
 
-@test m1.weight == 1.0
 @test isapprox(mismatch([1.0, 2.0, 3.0], m1), 4.16666667) # 4.16666667 = 3 * (2 - 2)^2 / 0.5^2 + 3 / 2 * (1 - 0.5)^2 / 0.5^4
 @test isapprox(mismatch([2., 3., 4.], m1), 60.166667) 
-
-m_weighted = MeanSDMetric(100, 2.0, 0.5; weight=2.0)
-@test m_weighted.weight == 2.0
-@test isapprox(mismatch([1.0, 2.0, 3.0], m_weighted), 8.33333334)
 
 @test_throws ArgumentError mismatch(Float64[], m1) # too short
 @test_throws ArgumentError mismatch([1., 2.], m1) # too short
@@ -22,7 +17,6 @@ m_weighted = MeanSDMetric(100, 2.0, 0.5; weight=2.0)
 @test_throws ArgumentError MeanSDMetric(100, 2.0, Inf) # Inf sd
 @test_throws ArgumentError MeanSDMetric(100, NaN, 0.5) # NaN mean
 @test_throws ArgumentError MeanSDMetric(100, Inf, 0.5) # Inf mean
-@test_throws ArgumentError MeanSDMetric(100, 2.0, 0.5; weight=-1.0) # negative weight
 
 # add_mismatch_expression! tests
 model = JuMP.Model()
