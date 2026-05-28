@@ -8,7 +8,7 @@ bindings_df = DataFrame(
     var"metric.mean" = [1.0, 2.0, 3.0],
     var"metric.sd" = [0.1, 0.2, 0.3],
     var"metric.size" = [100, 200, 300],
-    var"metric.weight" = [2.0, missing, 0.5],
+    var"weight" = [2.0, missing, 0.5],
 )
 
 bindings = parse_metric_bindings(bindings_df)

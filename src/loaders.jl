@@ -10,8 +10,8 @@ The DataFrame should contain the following columns:
 - `scenario`: The scenario to which the metric binding applies.
 - `endpoint`: The observable (endpoint) associated with the metric binding.
 - `active`: (optional) A boolean indicating whether the metric binding is active (default is `true`).
+- `metric`: (optional) Multiplier applied to this row's loss contribution (default is `1.0`).
 - `metric.type`: The type of metric (e.g., "mean", "category", etc.).
-- `metric.weight`: (optional) Multiplier applied to this row's loss contribution (default is `1.0`).
 - `metric.<parameter>`: Additional parameters for the metric, depending on its type.
 The function uses the `PARSERS` dictionary to find the appropriate parser for the metric type.
 The function iterates over each row of the DataFrame, extracting the relevant information and creating a `MetricBinding` object.

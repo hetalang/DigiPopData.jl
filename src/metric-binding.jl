@@ -1,5 +1,8 @@
 using DataFrames
 
+const DEFAULT_METRIC_WEIGHT = 1.0
+
+
 """
 `MetricBinding` is container that binds a **scenario**, an **endpoint** and a concrete
 `AbstractMetric` description into a single unit that can be logged,
@@ -30,7 +33,7 @@ struct MetricBinding
         metric::AbstractMetric,
         endpoint::String,
         active::Bool,
-        weight::Real = DEFAULT_METRIC_WEIGHT,
+        weight::Real,
     )
         weight = Float64(weight)
         _validate_weight(weight)
@@ -108,3 +111,19 @@ function get_loss(simulated::DataFrame, metric_bindings::Vector{MetricBinding})
 
     return loss
 end
+
+function _validate_weight(weight::Float64)
+    weight >= 0 || throw(ArgumentError("Weight must be non-negative"))
+    isfinite(weight) || throw(ArgumentError("Weight must be finite"))
+    !isnan(weight) || throw(ArgumentError("Weight must not be NaN"))
+end
+
+function _safe_weight(x)
+    if x === missing || x == ""
+        return DEFAULT_METRIC_WEIGHT
+    end
+
+    x isa AbstractString ? parse(Float64, x) : Float64(x)
+end
+
+_parse_metric_weight(row) = _safe_weight(get(row, Symbol("weight"), DEFAULT_METRIC_WEIGHT))

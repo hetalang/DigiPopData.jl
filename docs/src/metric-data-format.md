@@ -37,19 +37,19 @@ Each row corresponds to one metric.
 A metric table typically includes:
 
 - `id` — unique object identifier  
-- `active` — whether the metric is included in the loss (`1` or `0`)  
+- `active` — whether the metric is included in the loss (`1` or `0`)
+- `weight` — optional multiplier applied to this row's contribution to the total loss (default is `1.0`)
 - `scenario` — scenario identifier used to match simulation conditions  
 - `endpoint` — name of the simulation output column used for comparison  
 - `metric.type` — metric type (e.g. `mean`, `mean_sd`, `category`, `quantile`, `survival`)  
 - `metric.size` — experimental sample size
-- `metric.weight` — optional multiplier applied to this row's contribution to the total loss
 - `metric.<prop>` — additional metric-specific properties, see more details in [Overview](metrics.md)
 
 ## Example table
 
 The table below defines two metrics for the same scenario `Tx`:
 
-| id | active | scenario | metric.type | metric.size | metric.weight | endpoint | metric.mean | metric.sd | metric.levels | metric.values |
+| id | active | scenario | metric.type | metric.size | weight | endpoint | metric.mean | metric.sd | metric.levels | metric.values |
 |---|---:|---|---|---:|---:|---|---:|---:|---:|---:|
 | m\_conc24\_mean\_Tx | 1 | Tx | mean | 40 | 1.0 | conc_t24 | 2.10 | 0.2 |  |  |
 | m\_biomarker\_q\_Tx | 1 | Tx | quantile | 40 | 0.5 | biomarker |  |  | 0.25;0.50;0.75 | 0.1;1.35;10.1 |
