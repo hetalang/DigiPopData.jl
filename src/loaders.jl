@@ -21,7 +21,7 @@ function parse_metric_bindings(df::DataFrame)
     for row in eachrow(df)
         mb = try
             (; id, scenario, endpoint, var"metric.type") = row
-            active = get(row, :active, true)
+            active = _parse_metric_active(row)
             haskey(PARSERS, var"metric.type") || throw(ArgumentError("Unknown metric type \"$(var"metric.type")\""))
             dp = PARSERS[var"metric.type"](row)
             weight = _parse_metric_weight(row)

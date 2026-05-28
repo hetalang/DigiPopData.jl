@@ -1,6 +1,7 @@
 using DataFrames
 
 const DEFAULT_METRIC_WEIGHT = 1.0
+const DEFAULT_METRIC_ACTIVE = true
 
 
 """
@@ -127,3 +128,25 @@ function _safe_weight(x)
 end
 
 _parse_metric_weight(row) = _safe_weight(get(row, Symbol("weight"), DEFAULT_METRIC_WEIGHT))
+
+function _safe_active(x)
+    if x === missing || x == ""
+        return DEFAULT_METRIC_ACTIVE
+    end
+
+    if x isa Bool
+        return x
+    elseif x isa Integer
+        x in (0, 1) || throw(ArgumentError("Active must be boolean or 0/1"))
+        return Bool(x)
+    elseif x isa AbstractString
+        value = lowercase(strip(x))
+        value == "" && return DEFAULT_METRIC_ACTIVE
+        value in ("true", "1") && return true
+        value in ("false", "0") && return false
+    end
+
+    throw(ArgumentError("Active must be boolean or 0/1"))
+end
+
+_parse_metric_active(row) = _safe_active(get(row, Symbol("active"), DEFAULT_METRIC_ACTIVE))
