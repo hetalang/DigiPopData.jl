@@ -1,11 +1,11 @@
-import JuMP: VariableRef, AffExpr, GenericModel, @variable, @constraint
+import JuMP: VariableRef, GenericModel, @variable, @constraint # AffExpr
 
-const RATE_TOL = 1e-6 # value to comare rates to 1 or 0
+const RATE_TOL = 1e-6 # value to compare rates to 1 or 0
 
 """
     AbstractMetric
 
-Abstract super‑type for all *metric* descriptors used by DigiPopData.
+Abstract super-type for all *metric* descriptors used by DigiPopData.
 
 ## Purpose
 Group together heterogeneous metrics (Mean, MeanSD, Category, …) so they
@@ -13,7 +13,7 @@ can share the same dispatch points (`mismatch`, `mismatch_expression`, `get_loss
 
 ## Required interface
 - `mismatch`: Function to calculate the loss for a given metric and simulated data as a value.
-- `mismatch_expression`: Function to calculate the loss for a given metric and simulated data as an expression.
+- `mismatch_expression`: Function to calculate the loss for a given metric and simulated data as a JuMP expression.
 - `validate`: Function to validate the simulated data against the metric.
 
 The parsing rules for the metric type are defined in the `PARSERS` dictionary to convert from `DataFrame`
@@ -59,19 +59,6 @@ function mismatch_expression(prob::GenericModel, sim::AbstractVector, dp::Abstra
 end
 
 """
-    add_mismatch_expression!(prob::GenericModel, sim::AbstractVector, dp::AbstractMetric, X::Vector{VariableRef}, X_len::Int) -> QuadExpr
-
-Create a metric mismatch expression, push it to `prob[:LOSS]`, and return it.
-"""
-function add_mismatch_expression!(prob::GenericModel, sim::AbstractVector, dp::AbstractMetric, X::Vector{VariableRef}, X_len::Int)
-    _init_loss(prob)
-
-    loss = mismatch_expression(prob, sim, dp, X, X_len)
-    push!(prob[:LOSS], loss)
-    loss
-end
-
-"""
     validate(sim::AbstractVector{<:Real, dp::AbstractMetric)
 ## Arguments
 - `sim::AbstractVector{<:Real}`: A vector of simulated data.
@@ -83,10 +70,4 @@ The concrete validation rules depend on the subtype of `AbstractMetric`.
 """
 function validate(sim::AbstractVector{<:Real}, dp::AbstractMetric)
     throw(MethodError(validate, (sim, dp))) # fallback
-end
-
-function _init_loss(prob::GenericModel)
-    if !haskey(prob, :LOSS)
-        prob[:LOSS] = Any[]
-    end
 end

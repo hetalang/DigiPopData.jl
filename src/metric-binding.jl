@@ -5,20 +5,35 @@ const DEFAULT_METRIC_ACTIVE = true
 
 
 """
-`MetricBinding` is container that binds a **scenario**, an **endpoint** and a concrete
-`AbstractMetric` description into a single unit that can be logged,
-displayed or passed to optimisation / validation routines.
+    MetricBinding(id, scenario, metric, endpoint; active = true, weight = 1.0)
+    MetricBinding(id, scenario, metric, endpoint, active, weight)
 
-# Fields
-| Name        | Type                     | Description                                               |
-|-------------|--------------------------|-----------------------------------------------------------|
-| `id`        | `String`                 | Unique identifier of the binding |
-| `scenario`  | `String`                 | Scenario (e.g. simulation arm) in which the metric is evaluated |
-| `metric`    | `AbstractMetric`         | Metric implementation (`MeanMetric`, `CategoryMetric`, …) |
-| `endpoint`  | `String`                 | Observable / model variable the metric is computed for    |
-| `active`    | `Bool`                   | Whether the binding is enabled (`true` by default)        |
-| `weight`    | `Float64`                | Multiplier applied to this binding's loss                 |
+Bind one experimental metric to one simulated endpoint in one scenario.
 
+A `MetricBinding` tells loss calculations which simulated column should be
+compared against a concrete [`AbstractMetric`](@ref), and how that metric should
+contribute to the total loss.
+
+# Arguments
+- `id::String`: Unique identifier for this binding.
+- `scenario::String`: Scenario label used to select rows from the simulated data.
+- `metric::AbstractMetric`: Experimental target, such as `MeanMetric` or `CategoryMetric`.
+- `endpoint::String`: Name of the simulated data column used for comparison.
+- `active::Bool`: Whether this binding is included in loss calculations.
+- `weight::Real`: Non-negative, finite multiplier applied to this binding's loss.
+
+# Defaults
+- `active` defaults to `true` when omitted from the keyword constructor.
+- `weight` defaults to `1.0` when omitted from the keyword constructor.
+
+# Throws
+Throws `ArgumentError` when `weight` is negative, infinite, or `NaN`.
+
+# Examples
+```julia
+metric = MeanMetric(40, 2.1, 0.2)
+binding = MetricBinding("m_conc_mean", "Tx", metric, "conc_t24"; weight = 2.0)
+```
 """
 struct MetricBinding
     id::String # not sure this is needed
@@ -47,13 +62,16 @@ MetricBinding(
     id::String,
     scenario::String,
     metric::AbstractMetric,
-    endpoint::String,
-    active::Bool;
+    endpoint::String;
+    active::Bool = DEFAULT_METRIC_ACTIVE,
     weight::Real = DEFAULT_METRIC_WEIGHT,
 ) = MetricBinding(id, scenario, metric, endpoint, active, weight)
 
-mismatch(sim::AbstractVector, b::MetricBinding) = b.weight * mismatch(sim, b.metric)
+"""
+    add_mismatch_expression!(prob::GenericModel, sim::AbstractVector, b::MetricBinding, X::Vector{VariableRef}, X_len::Int) -> QuadExpr
 
+Create a metric mismatch expression, push it to `prob[:LOSS]`, and return it.
+"""
 function add_mismatch_expression!(
     prob::GenericModel,
     sim::AbstractVector,
@@ -63,9 +81,13 @@ function add_mismatch_expression!(
 )
     _init_loss(prob)
 
-    loss = b.weight * mismatch_expression(prob, sim, b.metric, X, X_len)
-    push!(prob[:LOSS], loss)
-    loss
+    if b.active
+        loss = b.weight * mismatch_expression(prob, sim, b.metric, X, X_len)
+        push!(prob[:LOSS], loss)
+        return loss
+    else
+        return 0.0
+    end
 end
 
 # TODO: for future use, when we need check all data before we start calculation
@@ -73,31 +95,49 @@ function _validate_simulated(simulated::DataFrame, metric_bindings::Vector{Metri
 
 end
 
-### Main function of the module
+"""
+    get_loss(simulated::DataFrame, metric_bindings::Vector{MetricBinding}, cohort::Vector{String}) -> Float64
 
-# calculated for selected patients in the cohort
+Calculate total loss after restricting `simulated` to rows whose `id` is in `cohort`.
+
+This method first filters the simulation table, then calls
+`get_loss(simulated_subset, metric_bindings)`.
+"""
 function get_loss(simulated::DataFrame, metric_bindings::Vector{MetricBinding}, cohort::Vector{String}) 
     # select subset of DataFrame
-    selected = in.(df.id, Ref(cohort))
+    selected = in.(simulated.id, Ref(cohort))
     simulated_subset = simulated[selected, :]
 
     get_loss(simulated_subset, metric_bindings)
 end
 
-# calculate for all patients in the cohort
 """
     get_loss(simulated::DataFrame, metric_bindings::Vector{MetricBinding}) -> Float64
 
-Calculate the loss for a given set of metric bindings and a simulated DataFrame.
-The function iterates over the metric bindings, selecting the relevant data from the simulated DataFrame
- based on the scenario and endpoint specified in each binding. It then computes the loss using the `mismatch`
- function defined for the binding.
+Calculate the total weighted loss for all active metric bindings.
 
-## Arguments
-- `simulated::DataFrame`: A DataFrame containing the simulated data.
-- `metric_bindings::Vector{MetricBinding}`: A vector of `MetricBinding` objects, each containing a scenario,
-endpoint, and metric.
+For each active [`MetricBinding`](@ref), this function selects simulated values
+from rows where `simulated.scenario .== binding.scenario` and from the column
+named by `binding.endpoint`. It then adds the binding's weighted
+[`mismatch`](@ref) to the total. Inactive bindings are ignored.
 
+# Arguments
+- `simulated::DataFrame`: Simulation table. It must contain a `scenario` column
+  and every endpoint column referenced by active bindings.
+- `metric_bindings::Vector{MetricBinding}`: Bindings that define which metrics
+  to evaluate and how they are weighted.
+
+# Returns
+The sum of weighted mismatches as a `Float64`.
+
+# Examples
+```julia
+df = DataFrame(scenario = ["Tx", "Tx", "Tx"], conc_t24 = [2.0, 2.1, 2.2])
+metric = MeanMetric(40, 2.1, 0.2)
+binding = MetricBinding("m_conc_mean", "Tx", metric, "conc_t24")
+
+loss = get_loss(df, [binding])
+```
 """
 function get_loss(simulated::DataFrame, metric_bindings::Vector{MetricBinding})
     _validate_simulated(simulated, metric_bindings)
@@ -107,46 +147,24 @@ function get_loss(simulated::DataFrame, metric_bindings::Vector{MetricBinding})
         !b.active && continue # skip inactive metric bindings
         # select only endpoint which refers to scenario
         selected = simulated[simulated.scenario .== b.scenario, b.endpoint]
-        loss += mismatch(selected, b)
+        loss += get_loss(selected, b)
     end
 
     return loss
 end
 
+function get_loss(simulated::AbstractVector, binding::MetricBinding)
+    binding.weight * mismatch(simulated, binding.metric)
+end
+
 function _validate_weight(weight::Float64)
-    weight >= 0 || throw(ArgumentError("Weight must be non-negative"))
     isfinite(weight) || throw(ArgumentError("Weight must be finite"))
     !isnan(weight) || throw(ArgumentError("Weight must not be NaN"))
+    weight >= 0 || throw(ArgumentError("Weight must be non-negative"))
 end
 
-function _safe_weight(x)
-    if x === missing || x == ""
-        return DEFAULT_METRIC_WEIGHT
+function _init_loss(prob::GenericModel)
+    if !haskey(prob, :LOSS)
+        prob[:LOSS] = Any[]
     end
-
-    x isa AbstractString ? parse(Float64, x) : Float64(x)
 end
-
-_parse_metric_weight(row) = _safe_weight(get(row, Symbol("weight"), DEFAULT_METRIC_WEIGHT))
-
-function _safe_active(x)
-    if x === missing || x == ""
-        return DEFAULT_METRIC_ACTIVE
-    end
-
-    if x isa Bool
-        return x
-    elseif x isa Integer
-        x in (0, 1) || throw(ArgumentError("Active must be boolean or 0/1"))
-        return Bool(x)
-    elseif x isa AbstractString
-        value = lowercase(strip(x))
-        value == "" && return DEFAULT_METRIC_ACTIVE
-        value in ("true", "1") && return true
-        value in ("false", "0") && return false
-    end
-
-    throw(ArgumentError("Active must be boolean or 0/1"))
-end
-
-_parse_metric_active(row) = _safe_active(get(row, Symbol("active"), DEFAULT_METRIC_ACTIVE))
