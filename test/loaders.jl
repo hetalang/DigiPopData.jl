@@ -24,6 +24,25 @@ bindings = parse_metric_bindings(bindings_df)
 @test bindings[2].weight == 1.0
 @test bindings[3].weight == 0.5
 
+bindings_df_string_defaults = DataFrame(
+    id = ["1", "2", "3"],
+    active = [" TRUE ", " false ", ""],
+    scenario = fill("scn1", 3),
+    endpoint = fill("A", 3),
+    var"metric.type" = fill("mean", 3),
+    var"metric.mean" = fill("1.0", 3),
+    var"metric.sd" = fill("0.1", 3),
+    var"metric.size" = fill(100, 3),
+    weight = ["2.5", "", missing],
+)
+
+bindings_string_defaults = parse_metric_bindings(bindings_df_string_defaults)
+
+@test getproperty.(bindings_string_defaults, :active) == [true, false, true]
+@test getproperty.(bindings_string_defaults, :weight) == [2.5, 1.0, 1.0]
+@test all(b -> b.metric isa MeanMetric, bindings_string_defaults)
+@test all(b -> b.metric.mean == 1.0 && b.metric.sd == 0.1, bindings_string_defaults)
+
 # default active
 bindings_df2 = DataFrame(
     id = ["1"],
@@ -70,6 +89,20 @@ bindings_df_bad_active = DataFrame(
 
 @test_throws ErrorException parse_metric_bindings(bindings_df_bad_active)
 
+bindings_df_bad_weight = DataFrame(
+    id = ["1"],
+    active = [true],
+    scenario = ["scn1"],
+    endpoint = ["A"],
+    var"metric.type" = ["mean"],
+    var"metric.mean" = [1.0],
+    var"metric.sd" = [0.1],
+    var"metric.size" = [100],
+    weight = [-1.0],
+)
+
+@test_throws ErrorException parse_metric_bindings(bindings_df_bad_weight)
+
 # parsing error
 bindings_df3 = DataFrame(
     id = ["1"],
@@ -82,3 +115,24 @@ bindings_df3 = DataFrame(
 )
 
 @test_throws ErrorException parse_metric_bindings(bindings_df3)
+
+bindings_df_row_error = DataFrame(
+    id = ["1", "2"],
+    active = [true, true],
+    scenario = ["scn1", "scn1"],
+    endpoint = ["A", "A"],
+    var"metric.type" = ["mean", "mean"],
+    var"metric.mean" = [1.0, 2.0],
+    var"metric.sd" = [0.1, -0.2],
+    var"metric.size" = [100, 100],
+)
+
+err = try
+    parse_metric_bindings(bindings_df_row_error)
+    nothing
+catch e
+    e
+end
+
+@test err isa ErrorException
+@test occursin("Failed to process row 2", sprint(showerror, err))

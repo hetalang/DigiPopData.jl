@@ -37,7 +37,7 @@ Each row corresponds to one metric.
 A metric table typically includes:
 
 - `id` — unique object identifier  
-- `active` — whether the metric is included in the loss (`1` or `0`)
+- `active` — whether the metric is included in the loss (`1` or `0`, default is `1`)
 - `weight` — optional multiplier applied to this row's contribution to the total loss (default is `1.0`)
 - `scenario` — scenario identifier used to match simulation conditions  
 - `endpoint` — name of the simulation output column used for comparison  
@@ -60,6 +60,7 @@ Interpretation:
 - `m_biomarker_q_Tx` targets the **quantiles** (0.25, 0.50, 0.75) of `biomarker`.
 
 In practice, you may store only the columns required by the metric types used in your dataset.
+In case of multiple metrics types, some columns may be left empty for certain rows (e.g. `metric.mean` and `metric.sd` are not used for quantile metrics).
 
 ## Loading from CSV
 

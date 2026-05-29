@@ -151,10 +151,14 @@ PARSERS["quantile"] = (row) -> begin
     levels = parse.(Float64, split(levels_string, ";"))
     values_string = row[Symbol("metric.values")]
     values = parse.(Float64, split(values_string, ";"))
-    skip_nan_string = row[Symbol("metric.skip_nan")]
-    skip_nan = typeof(skip_nan_string) == String ?
-        parse(Bool, skip_nan_string) : 
-        skip_nan_string
+    skip_nan_value = get(row, Symbol("metric.skip_nan"), false)
+    skip_nan = if skip_nan_value === missing || skip_nan_value == ""
+        false
+    elseif skip_nan_value isa AbstractString
+        parse(Bool, skip_nan_value)
+    else
+        skip_nan_value
+    end
 
     QuantileMetric(size, levels, values; skip_nan=Bool(skip_nan))
 end
