@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.3.0
+
+- Added `weight` to `MetricBinding` and tables.
+- Renamed `add_mismatch_expression!` to `add_loss_expression!`.
+- Improved metric table parsing: `active` and `weight`.
+
 ## 0.2.0
 
 - Refactoring to support `VPopMIP`: `add_mismatch_expression!`
