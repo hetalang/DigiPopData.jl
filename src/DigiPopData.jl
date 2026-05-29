@@ -5,8 +5,8 @@ include("metric-types/abstract-metric.jl")
 include("metric-binding.jl")
 include("loaders.jl")
 
-export mismatch, mismatch_expression, add_mismatch_expression!
-export MetricBinding, get_loss
+export mismatch, mismatch_expression
+export MetricBinding, get_loss, add_mismatch_expression!
 export parse_metric_bindings
 
 # list of data point types can be extended by adding new types to this list

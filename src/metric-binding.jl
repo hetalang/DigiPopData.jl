@@ -68,11 +68,11 @@ MetricBinding(
 ) = MetricBinding(id, scenario, metric, endpoint, active, weight)
 
 """
-    add_mismatch_expression!(prob::GenericModel, sim::AbstractVector, b::MetricBinding, X::Vector{VariableRef}, X_len::Int) -> QuadExpr
+    add_loss_expression!(prob::GenericModel, sim::AbstractVector, b::MetricBinding, X::Vector{VariableRef}, X_len::Int) -> QuadExpr
 
-Create a metric mismatch expression, push it to `prob[:LOSS]`, and return it.
+Create a metric mismatch expression, push it to `prob[:LOSS]` taking into account weight and active status, and return it.
 """
-function add_mismatch_expression!(
+function add_loss_expression!(
     prob::GenericModel,
     sim::AbstractVector,
     b::MetricBinding,
